@@ -4,28 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AgendaBot - Calendario Personal</title>
-    <!-- FullCalendar CSS/JS -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: system-ui, sans-serif; }
-        body { margin: 0; background: #f0f2f5; padding: 1rem; }
+        body { margin: 0; background: #f0f4f8; padding: 1rem; }
         .container { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1.5fr; gap: 1rem; }
-        .chat-panel { background: white; border-radius: 24px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 80vh; }
-        .calendar-panel { background: white; border-radius: 24px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .messages { flex: 1; overflow-y: auto; margin-bottom: 1rem; border: 1px solid #eee; border-radius: 16px; padding: 0.5rem; background: #fafafa; }
+        .chat-panel, .calendar-panel { background: white; border-radius: 24px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .chat-panel { display: flex; flex-direction: column; height: 80vh; }
+        .messages { flex: 1; overflow-y: auto; margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 16px; padding: 0.5rem; background: #fafcff; }
         .message { margin: 0.5rem; padding: 0.5rem 1rem; border-radius: 20px; max-width: 85%; }
-        .user { background: #d32f2f; color: white; align-self: flex-end; text-align: right; margin-left: auto; }
-        .bot { background: #e5e7eb; color: #1f2937; }
-        .input-area { display: flex; gap: 0.5rem; }
-        input { flex: 1; padding: 0.75rem; border-radius: 40px; border: 1px solid #ccc; }
-        button { background: #d32f2f; color: white; border: none; border-radius: 40px; padding: 0 1.25rem; cursor: pointer; }
-        button:hover { background: #b71c1c; }
-        h2, h3 { margin: 0 0 0.5rem 0; }
+        .user { background: #3b82f6; color: white; align-self: flex-end; text-align: right; margin-left: auto; }
+        .bot { background: #e9eef5; color: #1f2937; }
+        .input-area { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+        input { flex: 1; padding: 0.75rem; border-radius: 40px; border: 1px solid #cbd5e1; outline: none; }
+        input:focus { border-color: #8b5cf6; }
+        button { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; border: none; border-radius: 40px; padding: 0 1.5rem; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        button:hover { opacity: 0.9; transform: scale(1.02); }
+        h2, h3 { margin: 0 0 0.5rem 0; color: #1e293b; }
         .quick-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
-        .quick-btn { background: #e0e0e0; color: #333; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; cursor: pointer; }
-        .quick-btn:hover { background: #ccc; }
-        footer { text-align: center; margin-top: 1rem; font-size: 0.75rem; color: #666; grid-column: span 2; }
+        .quick-btn { background: #e2e8f0; color: #1e40af; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
+        .quick-btn:hover { background: #cbd5e1; }
+        footer { text-align: center; margin-top: 1rem; font-size: 0.75rem; color: #64748b; grid-column: span 2; }
+        a { color: #8b5cf6; }
+        /* Calendario personalizado */
+        .fc { font-size: 0.9rem; }
+        .fc .fc-button-primary { background: #3b82f6; border-color: #3b82f6; }
+        .fc .fc-button-primary:hover { background: #2563eb; }
+        .fc-daygrid-event { background: #8b5cf6; border-color: #7c3aed; }
     </style>
 </head>
 <body>
@@ -35,21 +41,22 @@
         <div class="quick-buttons">
             <div class="quick-btn" data-msg="Agenda una reunión con el equipo mañana a las 10am">📅 Ejemplo: reunión mañana</div>
             <div class="quick-btn" data-msg="¿Qué tengo hoy?">📌 ¿Qué tengo hoy?</div>
-            <div class="quick-btn" data-msg="¿Qué tengo la próxima semana?">📆 Próxima semana</div>
+            <div class="quick-btn" data-msg="¿Qué tengo el viernes?">📆 Viernes</div>
             <div class="quick-btn" data-msg="Cancela mi reunión con el equipo">❌ Cancelar</div>
             <div class="quick-btn" data-msg="Cambia la reunión con el equipo a las 4pm">✏️ Editar hora</div>
         </div>
         <div class="messages" id="messages"></div>
         <div class="input-area">
-            <input type="text" id="userInput" placeholder="Escribe tu mensaje... (ej: Agenda reunión con Ana el viernes a las 3pm)" autofocus>
+            <input type="text" id="userInput" placeholder="Ej: Agenda firma el viernes a las 7am" autofocus>
             <button id="sendBtn">Enviar</button>
         </div>
     </div>
     <div class="calendar-panel">
         <h3>📅 Calendario</h3>
         <div id="calendar"></div>
+        <p style="font-size:0.7rem; margin-top:0.5rem;">🔍 Haz clic en un evento para cancelarlo</p>
     </div>
-    <footer>⚡ Los eventos se guardan en la nube. Puedes cancelar, editar y ver tu mes completo.</footer>
+    <footer>⚡ Los eventos se guardan en la nube. Puedes preguntar: "¿Qué tengo el viernes?" o "Cancela cumpleaños".</footer>
 </div>
 
 <script>
@@ -104,48 +111,47 @@
         typingDiv = null;
     }
 
-    // Calendario FullCalendar
     let calendar;
     async function cargarEventosCalendario() {
-        const res = await fetch(EVENTOS_URL);
-        const eventos = await res.json();
-        const events = eventos.map(ev => ({
-            title: ev.titulo,
-            start: `${ev.fecha}T${ev.hora}:00`,
-            end: `${ev.fecha}T${ev.hora}:00`,
-            extendedProps: { id: ev.id }
-        }));
-        if (calendar) {
-            calendar.removeAllEvents();
-            calendar.addEventSource(events);
-        } else {
-            const calendarEl = document.getElementById('calendar');
-            calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                locale: 'es',
-                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
-                events: events,
-                eventClick: function(info) {
-                    const titulo = info.event.title;
-                    const fecha = info.event.start.toISOString().slice(0,10);
-                    const hora = info.event.start.toISOString().slice(11,16);
-                    if (confirm(`¿Cancelar evento "${titulo}" del ${fecha} a las ${hora}?`)) {
-                        sendMessage(`Cancela ${titulo} del ${fecha}`);
+        try {
+            const res = await fetch(EVENTOS_URL);
+            const eventos = await res.json();
+            const events = eventos.map(ev => ({
+                title: ev.titulo,
+                start: `${ev.fecha}T${ev.hora}:00`,
+                extendedProps: { id: ev.id }
+            }));
+            if (calendar) {
+                calendar.removeAllEvents();
+                calendar.addEventSource(events);
+            } else {
+                const calendarEl = document.getElementById('calendar');
+                calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    locale: 'es',
+                    headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
+                    events: events,
+                    eventClick: function(info) {
+                        const titulo = info.event.title;
+                        const fecha = info.event.start.toISOString().slice(0,10);
+                        const hora = info.event.start.toISOString().slice(11,16);
+                        if (confirm(`¿Cancelar evento "${titulo}" del ${fecha} a las ${hora}?`)) {
+                            sendMessage(`Cancela ${titulo} del ${fecha}`);
+                        }
                     }
-                }
-            });
-            calendar.render();
-        }
+                });
+                calendar.render();
+            }
+        } catch(e) { console.error("Error cargando calendario", e); }
     }
 
-    // Eventos UI
     sendBtn.addEventListener('click', () => sendMessage());
     userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
     document.querySelectorAll('.quick-btn').forEach(btn => {
         btn.addEventListener('click', () => sendMessage(btn.getAttribute('data-msg')));
     });
 
-    addMessage("👋 ¡Hola! Puedes agendar, cancelar, editar y ver tu calendario. Prueba los botones rápidos.", 'bot');
+    addMessage("👋 ¡Hola! Soy tu asistente de agenda (azul/morado 🎨). Puedes preguntar: '¿Qué tengo el viernes?' o 'Cancela cumpleaños'.", 'bot');
     cargarEventosCalendario();
 </script>
 </body>
