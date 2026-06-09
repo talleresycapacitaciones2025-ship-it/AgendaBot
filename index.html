@@ -211,7 +211,6 @@
     const calendarPanel = document.getElementById('calendarPanel');
     let calendar = null;
 
-    // --- Funciones del chat ---
     function addMessage(text, type) {
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${type}`;
@@ -267,9 +266,8 @@
         }
     }
 
-    // --- Función para formatear hora HH:MM siempre con dos dígitos en minutos ---
+    // Función para formatear hora HH:MM siempre con dos dígitos en minutos
     function formatearHoraCompleta(hora) {
-        // hora viene como "HH:MM"
         if (!hora) return "";
         const partes = hora.split(':');
         if (partes.length !== 2) return hora;
@@ -279,7 +277,7 @@
         return `${h}:${m}`;
     }
 
-    // --- Calendario con hora formateada correctamente ---
+    // Calendario con hora completa y cancelación por ID
     async function cargarEventosCalendario() {
         try {
             const resp = await fetch(EVENTOS_URL);
@@ -290,10 +288,10 @@
                 if (isNaN(minute)) minute = 0;
                 const fechaLocal = new Date(year, month-1, day, hour, minute);
                 if (isNaN(fechaLocal.getTime())) return null;
-                // Forzar el título a mostrar la hora completa (ej. "Webinar 11:00")
                 const horaCompleta = formatearHoraCompleta(ev.hora);
                 const tituloConHora = `${ev.titulo} ${horaCompleta}`;
                 return {
+                    id: ev.id,
                     title: tituloConHora,
                     start: fechaLocal,
                     extendedProps: { id: ev.id, horaOriginal: ev.hora }
@@ -316,15 +314,11 @@
                     buttonText: { today: 'Hoy', month: 'Mes', week: 'Semana', day: 'Día' },
                     events: eventosFormateados,
                     eventClick: function(info) {
+                        const idEvento = info.event.extendedProps.id;
                         const titulo = info.event.title;
-                        // Extraer el título sin la hora añadida
-                        const tituloLimpio = titulo.replace(/\s\d{1,2}:\d{2}$/, '');
-                        const start = info.event.start;
-                        if (!start) return;
-                        const fechaStr = `${start.getFullYear()}-${(start.getMonth()+1).toString().padStart(2,'0')}-${start.getDate().toString().padStart(2,'0')}`;
-                        const horaStr = `${start.getHours().toString().padStart(2,'0')}:${start.getMinutes().toString().padStart(2,'0')}`;
-                        if (confirm(`¿Cancelar evento "${tituloLimpio}" del ${fechaStr} a las ${horaStr}?`)) {
-                            sendMessage(`Cancela ${tituloLimpio} del ${fechaStr}`);
+                        const fechaStr = info.event.start.toISOString().slice(0,10);
+                        if (confirm(`¿Cancelar evento "${titulo}" del ${fechaStr}?`)) {
+                            sendMessage(`Cancela id:${idEvento}`);
                         }
                     }
                 });
@@ -335,7 +329,6 @@
         }
     }
 
-    // Mostrar/ocultar calendario
     toggleCalendarBtn.addEventListener('click', async () => {
         const isVisible = calendarPanel.classList.contains('visible');
         if (!isVisible) {
