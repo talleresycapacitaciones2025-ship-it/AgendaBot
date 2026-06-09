@@ -2,99 +2,238 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgendaBot - Calendario Personal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>AgendaBot · Calendario</title>
+    <!-- FullCalendar CSS + JS + locale español -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/locales/es.global.min.js"></script>
     <style>
-        * { box-sizing: border-box; font-family: system-ui, sans-serif; }
-        body { margin: 0; background: #f0f4f8; padding: 1rem; }
-        .container { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1.5fr; gap: 1rem; }
-        .chat-panel, .calendar-panel { background: white; border-radius: 24px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .chat-panel { display: flex; flex-direction: column; height: 80vh; }
-        .messages { flex: 1; overflow-y: auto; margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 16px; padding: 0.5rem; background: #fafcff; }
-        .message { margin: 0.5rem; padding: 0.5rem 1rem; border-radius: 20px; max-width: 85%; }
-        .user { background: #3b82f6; color: white; align-self: flex-end; text-align: right; margin-left: auto; }
-        .bot { background: #e9eef5; color: #1f2937; }
-        .input-area { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
-        input { flex: 1; padding: 0.75rem; border-radius: 40px; border: 1px solid #cbd5e1; outline: none; }
-        input:focus { border-color: #8b5cf6; }
-        button { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; border: none; border-radius: 40px; padding: 0 1.5rem; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        button:hover { opacity: 0.9; transform: scale(1.02); }
-        h2, h3 { margin: 0 0 0.5rem 0; color: #1e293b; }
-        .quick-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
-        .quick-btn { background: #e2e8f0; color: #1e40af; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
-        .quick-btn:hover { background: #cbd5e1; }
-        footer { text-align: center; margin-top: 1rem; font-size: 0.75rem; color: #64748b; grid-column: span 2; }
-        a { color: #8b5cf6; }
-        /* Calendario personalizado */
-        .fc { font-size: 0.9rem; }
-        .fc .fc-button-primary { background: #3b82f6; border-color: #3b82f6; }
-        .fc .fc-button-primary:hover { background: #2563eb; }
-        .fc-daygrid-event { background: #8b5cf6; border-color: #7c3aed; }
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            background: #f0f4fa;
+            padding: 12px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* Panel del chat (siempre visible) */
+        .chat-panel {
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            min-height: 65vh;
+        }
+
+        /* Panel del calendario (oculto por defecto) */
+        .calendar-panel {
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            padding: 1rem;
+            display: none;  /* inicialmente oculto */
+            flex-direction: column;
+            min-height: 60vh;
+        }
+        .calendar-panel.visible {
+            display: flex;
+        }
+
+        h2, h3 {
+            margin: 0 0 0.5rem 0;
+            font-weight: 600;
+            background: linear-gradient(135deg, #1e3a8a, #6d28d9);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        /* Botones rápidos */
+        .quick-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin-bottom: 1rem;
+        }
+        .quick-btn {
+            background: #eef2ff;
+            color: #1e40af;
+            padding: 0.5rem 1rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid #cbd5e1;
+        }
+        .quick-btn:hover {
+            background: #dbeafe;
+            transform: translateY(-1px);
+        }
+
+        /* Área de mensajes */
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 0.75rem;
+            padding: 0.5rem;
+            background: #fefefe;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            max-height: 55vh;
+        }
+        .message {
+            max-width: 85%;
+            padding: 0.6rem 1rem;
+            border-radius: 24px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        .user {
+            background: #3b82f6;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 6px;
+        }
+        .bot {
+            background: #e9eef5;
+            color: #0f172a;
+            align-self: flex-start;
+            border-bottom-left-radius: 6px;
+        }
+
+        /* Input */
+        .input-area {
+            display: flex;
+            gap: 0.7rem;
+            margin-top: 0.5rem;
+        }
+        input {
+            flex: 1;
+            padding: 0.8rem 1rem;
+            border-radius: 48px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        input:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+        }
+        button {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 48px;
+            padding: 0 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        button:hover {
+            opacity: 0.92;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.7rem;
+            color: #4b5563;
+        }
+
+        /* Calendario: mismos estilos, pero adaptado */
+        .fc {
+            font-size: 0.85rem;
+        }
+        .fc .fc-button-primary {
+            background: #3b82f6;
+            border-color: #3b82f6;
+        }
+        .fc-daygrid-event {
+            background: #6d28d9;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+        .fc-daygrid-event .fc-event-title {
+            color: white !important;
+            font-weight: 600;
+        }
+        .fc-day-today {
+            background-color: #eef2ff !important;
+        }
+
+        @media (max-width: 480px) {
+            .chat-panel { min-height: 60vh; }
+            .messages { max-height: 45vh; }
+            .quick-btn { font-size: 0.7rem; padding: 0.3rem 0.8rem; }
+            button { padding: 0 1rem; }
+        }
     </style>
 </head>
 <body>
 <div class="container">
+    <!-- Panel del chat -->
     <div class="chat-panel">
         <h2>🤖 AgendaBot</h2>
         <div class="quick-buttons">
-            <div class="quick-btn" data-msg="Agenda una reunión con el equipo mañana a las 10am">📅 Ejemplo: reunión mañana</div>
-            <div class="quick-btn" data-msg="¿Qué tengo hoy?">📌 ¿Qué tengo hoy?</div>
-            <div class="quick-btn" data-msg="¿Qué tengo el viernes?">📆 Viernes</div>
-            <div class="quick-btn" data-msg="Cancela mi reunión con el equipo">❌ Cancelar</div>
-            <div class="quick-btn" data-msg="Cambia la reunión con el equipo a las 4pm">✏️ Editar hora</div>
+            <div class="quick-btn" data-msg="¿Qué tengo hoy?">📌 Hoy</div>
+            <div class="quick-btn" data-msg="¿Qué tengo esta semana?">📆 Esta semana</div>
+            <div class="quick-btn" id="toggleCalendarBtn">🗓️ Mostrar calendario</div>
         </div>
         <div class="messages" id="messages"></div>
         <div class="input-area">
-            <input type="text" id="userInput" placeholder="Ej: Agenda firma el viernes a las 7am" autofocus>
+            <input type="text" id="userInput" placeholder="Ej: Agenda firma el viernes a las 3pm" autofocus>
             <button id="sendBtn">Enviar</button>
         </div>
     </div>
-    <div class="calendar-panel">
+
+    <!-- Panel del calendario (oculto inicialmente) -->
+    <div class="calendar-panel" id="calendarPanel">
         <h3>📅 Calendario</h3>
         <div id="calendar"></div>
-        <p style="font-size:0.7rem; margin-top:0.5rem;">🔍 Haz clic en un evento para cancelarlo</p>
+        <p style="font-size:0.7rem; margin-top:0.8rem;">🔍 Haz clic en un evento para cancelarlo</p>
     </div>
-    <footer>⚡ Los eventos se guardan en la nube. Puedes preguntar: "¿Qué tengo el viernes?" o "Cancela cumpleaños".</footer>
 </div>
+<footer>⚡ Los eventos se guardan en la nube. Pregunta: "¿Qué tengo hoy?", "¿Qué tengo esta semana?"</footer>
 
 <script>
+    // Configuración
     const WORKER_URL = "https://agenda-bot.dianaml76.workers.dev/chat";
     const EVENTOS_URL = "https://agenda-bot.dianaml76.workers.dev/eventos";
 
+    // Elementos DOM
     const messagesDiv = document.getElementById('messages');
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
+    const toggleCalendarBtn = document.getElementById('toggleCalendarBtn');
+    const calendarPanel = document.getElementById('calendarPanel');
+    let calendar = null;
 
+    // --- Funciones del chat ---
     function addMessage(text, type) {
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${type}`;
         msgDiv.innerText = text;
         messagesDiv.appendChild(msgDiv);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-
-    async function sendMessage(text = null) {
-        const message = text || userInput.value.trim();
-        if (!message) return;
-        if (!text) userInput.value = '';
-        addMessage(message, 'user');
-        showTyping();
-        try {
-            const res = await fetch(WORKER_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: message })
-            });
-            const data = await res.json();
-            hideTyping();
-            addMessage(data.respuesta_texto || "❌ Error", 'bot');
-            cargarEventosCalendario(); // refrescar calendario
-        } catch(e) {
-            hideTyping();
-            addMessage("❌ Error de conexión", 'bot');
-        }
     }
 
     let typingDiv = null;
@@ -111,48 +250,111 @@
         typingDiv = null;
     }
 
-    let calendar;
+    async function sendMessage(text = null) {
+        const message = text || userInput.value.trim();
+        if (!message) return;
+        if (!text) userInput.value = '';
+        addMessage(message, 'user');
+        showTyping();
+        try {
+            const res = await fetch(WORKER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: message })
+            });
+            const data = await res.json();
+            hideTyping();
+            addMessage(data.respuesta_texto || "❌ Respuesta vacía", 'bot');
+            // Si el calendario está visible, refrescarlo
+            if (calendarPanel.classList.contains('visible')) {
+                await cargarEventosCalendario();
+            }
+        } catch (err) {
+            hideTyping();
+            console.error(err);
+            addMessage("❌ Error de conexión con el Worker", 'bot');
+        }
+    }
+
+    // --- Calendario con corrección de zona horaria ---
     async function cargarEventosCalendario() {
         try {
-            const res = await fetch(EVENTOS_URL);
-            const eventos = await res.json();
-            const events = eventos.map(ev => ({
-                title: ev.titulo,
-                start: `${ev.fecha}T${ev.hora}:00`,
-                extendedProps: { id: ev.id }
-            }));
+            const resp = await fetch(EVENTOS_URL);
+            const eventos = await resp.json();
+            // Convertir cada evento a objeto Date local (evita el desfase UTC)
+            const eventosFormateados = eventos.map(ev => {
+                // Crear fecha y hora en zona local del navegador
+                const fechaHoraLocal = new Date(`${ev.fecha}T${ev.hora}:00`);
+                // Si la fecha es inválida, omitir
+                if (isNaN(fechaHoraLocal.getTime())) return null;
+                return {
+                    title: ev.titulo,
+                    start: fechaHoraLocal,  // FullCalendar lo tratará como local (porque es objeto Date)
+                    extendedProps: { id: ev.id }
+                };
+            }).filter(ev => ev !== null);
+
             if (calendar) {
                 calendar.removeAllEvents();
-                calendar.addEventSource(events);
+                calendar.addEventSource(eventosFormateados);
             } else {
                 const calendarEl = document.getElementById('calendar');
                 calendar = new FullCalendar.Calendar(calendarEl, {
                     initialView: 'dayGridMonth',
                     locale: 'es',
-                    headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
-                    events: events,
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek'
+                    },
+                    buttonText: { today: 'Hoy', month: 'Mes', week: 'Semana', day: 'Día' },
+                    events: eventosFormateados,
                     eventClick: function(info) {
                         const titulo = info.event.title;
-                        const fecha = info.event.start.toISOString().slice(0,10);
-                        const hora = info.event.start.toISOString().slice(11,16);
-                        if (confirm(`¿Cancelar evento "${titulo}" del ${fecha} a las ${hora}?`)) {
-                            sendMessage(`Cancela ${titulo} del ${fecha}`);
+                        const startDate = info.event.start;
+                        if (!startDate) return;
+                        const fechaStr = startDate.toISOString().slice(0,10);
+                        const horaStr = startDate.toTimeString().slice(0,5);
+                        if (confirm(`¿Cancelar evento "${titulo}" del ${fechaStr} a las ${horaStr}?`)) {
+                            sendMessage(`Cancela ${titulo} del ${fechaStr}`);
                         }
                     }
                 });
                 calendar.render();
             }
-        } catch(e) { console.error("Error cargando calendario", e); }
+        } catch (err) {
+            console.error("Error cargando calendario", err);
+        }
     }
 
+    // --- Mostrar/ocultar calendario al hacer clic en el botón ---
+    toggleCalendarBtn.addEventListener('click', async () => {
+        const isVisible = calendarPanel.classList.contains('visible');
+        if (!isVisible) {
+            // Mostrar calendario y cargar eventos
+            calendarPanel.classList.add('visible');
+            toggleCalendarBtn.textContent = '🗓️ Ocultar calendario';
+            await cargarEventosCalendario();
+        } else {
+            calendarPanel.classList.remove('visible');
+            toggleCalendarBtn.textContent = '🗓️ Mostrar calendario';
+        }
+    });
+
+    // --- Eventos UI ---
     sendBtn.addEventListener('click', () => sendMessage());
     userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
     document.querySelectorAll('.quick-btn').forEach(btn => {
-        btn.addEventListener('click', () => sendMessage(btn.getAttribute('data-msg')));
+        if (btn.id !== 'toggleCalendarBtn') {
+            btn.addEventListener('click', () => {
+                const msg = btn.getAttribute('data-msg');
+                if (msg) sendMessage(msg);
+            });
+        }
     });
 
-    addMessage("👋 ¡Hola! Soy tu asistente de agenda (azul/morado 🎨). Puedes preguntar: '¿Qué tengo el viernes?' o 'Cancela cumpleaños'.", 'bot');
-    cargarEventosCalendario();
+    // Mensaje de bienvenida
+    addMessage("👋 ¡Hola! Prueba: 'Agenda firma el viernes a las 3pm', '¿Qué tengo hoy?' o '¿Qué tengo esta semana?'", 'bot');
 </script>
 </body>
 </html>
