@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>AgendaBot · Calendario</title>
-    <!-- FullCalendar CSS + JS + locale español -->
+    <title>AgendaBot · Calendario Inteligente</title>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/locales/es.global.min.js"></script>
@@ -13,14 +12,12 @@
             box-sizing: border-box;
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
         }
-
         body {
             margin: 0;
             background: #f0f4fa;
             padding: 12px;
             min-height: 100vh;
         }
-
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -28,8 +25,6 @@
             flex-direction: column;
             gap: 1rem;
         }
-
-        /* Panel del chat (siempre visible) */
         .chat-panel {
             background: white;
             border-radius: 28px;
@@ -39,21 +34,18 @@
             flex-direction: column;
             min-height: 65vh;
         }
-
-        /* Panel del calendario (oculto por defecto) */
         .calendar-panel {
             background: white;
             border-radius: 28px;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
             padding: 1rem;
-            display: none;  /* inicialmente oculto */
+            display: none;
             flex-direction: column;
             min-height: 60vh;
         }
         .calendar-panel.visible {
             display: flex;
         }
-
         h2, h3 {
             margin: 0 0 0.5rem 0;
             font-weight: 600;
@@ -62,8 +54,6 @@
             -webkit-background-clip: text;
             color: transparent;
         }
-
-        /* Botones rápidos */
         .quick-buttons {
             display: flex;
             flex-wrap: wrap;
@@ -85,8 +75,6 @@
             background: #dbeafe;
             transform: translateY(-1px);
         }
-
-        /* Área de mensajes */
         .messages {
             flex: 1;
             overflow-y: auto;
@@ -105,6 +93,11 @@
             border-radius: 24px;
             font-size: 0.9rem;
             line-height: 1.4;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .message strong {
+            font-weight: 700;
         }
         .user {
             background: #3b82f6;
@@ -118,8 +111,6 @@
             align-self: flex-start;
             border-bottom-left-radius: 6px;
         }
-
-        /* Input */
         .input-area {
             display: flex;
             gap: 0.7rem;
@@ -150,15 +141,12 @@
         button:hover {
             opacity: 0.92;
         }
-
         footer {
             text-align: center;
             margin-top: 1rem;
             font-size: 0.7rem;
             color: #4b5563;
         }
-
-        /* Calendario: mismos estilos, pero adaptado */
         .fc {
             font-size: 0.85rem;
         }
@@ -179,7 +167,6 @@
         .fc-day-today {
             background-color: #eef2ff !important;
         }
-
         @media (max-width: 480px) {
             .chat-panel { min-height: 60vh; }
             .messages { max-height: 45vh; }
@@ -190,7 +177,6 @@
 </head>
 <body>
 <div class="container">
-    <!-- Panel del chat -->
     <div class="chat-panel">
         <h2>🤖 AgendaBot</h2>
         <div class="quick-buttons">
@@ -204,8 +190,6 @@
             <button id="sendBtn">Enviar</button>
         </div>
     </div>
-
-    <!-- Panel del calendario (oculto inicialmente) -->
     <div class="calendar-panel" id="calendarPanel">
         <h3>📅 Calendario</h3>
         <div id="calendar"></div>
@@ -231,7 +215,16 @@
     function addMessage(text, type) {
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${type}`;
-        msgDiv.innerText = text;
+        if (type === 'bot') {
+            // Formatear: convertir **texto** a <strong>
+            let formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            formatted = formatted.replace(/^[•\-]\s+/gm, '🔹 ');
+            formatted = formatted.replace(/•/g, '🔹');
+            formatted = formatted.replace(/\n/g, '<br>');
+            msgDiv.innerHTML = formatted;
+        } else {
+            msgDiv.innerText = text;
+        }
         messagesDiv.appendChild(msgDiv);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
@@ -265,7 +258,6 @@
             const data = await res.json();
             hideTyping();
             addMessage(data.respuesta_texto || "❌ Respuesta vacía", 'bot');
-            // Si el calendario está visible, refrescarlo
             if (calendarPanel.classList.contains('visible')) {
                 await cargarEventosCalendario();
             }
@@ -276,21 +268,23 @@
         }
     }
 
-    // --- Calendario con corrección de zona horaria ---
+    // --- Calendario con creación de fechas en hora local (sin conversión UTC) ---
     async function cargarEventosCalendario() {
         try {
             const resp = await fetch(EVENTOS_URL);
             const eventos = await resp.json();
-            // Convertir cada evento a objeto Date local (evita el desfase UTC)
+            // Construir eventos usando partes de fecha y hora, sin interpretación UTC
             const eventosFormateados = eventos.map(ev => {
-                // Crear fecha y hora en zona local del navegador
-                const fechaHoraLocal = new Date(`${ev.fecha}T${ev.hora}:00`);
+                const [year, month, day] = ev.fecha.split('-').map(Number);
+                const [hour, minute] = ev.hora.split(':').map(Number);
+                // Crear fecha en hora local (el navegador la tratará como local)
+                const fechaLocal = new Date(year, month-1, day, hour, minute);
                 // Si la fecha es inválida, omitir
-                if (isNaN(fechaHoraLocal.getTime())) return null;
+                if (isNaN(fechaLocal.getTime())) return null;
                 return {
                     title: ev.titulo,
-                    start: fechaHoraLocal,  // FullCalendar lo tratará como local (porque es objeto Date)
-                    extendedProps: { id: ev.id }
+                    start: fechaLocal,
+                    extendedProps: { id: ev.id, horaOriginal: ev.hora }
                 };
             }).filter(ev => ev !== null);
 
@@ -311,10 +305,10 @@
                     events: eventosFormateados,
                     eventClick: function(info) {
                         const titulo = info.event.title;
-                        const startDate = info.event.start;
-                        if (!startDate) return;
-                        const fechaStr = startDate.toISOString().slice(0,10);
-                        const horaStr = startDate.toTimeString().slice(0,5);
+                        const start = info.event.start;
+                        if (!start) return;
+                        const fechaStr = start.toISOString().slice(0,10);
+                        const horaStr = `${start.getHours().toString().padStart(2,'0')}:${start.getMinutes().toString().padStart(2,'0')}`;
                         if (confirm(`¿Cancelar evento "${titulo}" del ${fechaStr} a las ${horaStr}?`)) {
                             sendMessage(`Cancela ${titulo} del ${fechaStr}`);
                         }
@@ -327,11 +321,10 @@
         }
     }
 
-    // --- Mostrar/ocultar calendario al hacer clic en el botón ---
+    // Mostrar/ocultar calendario
     toggleCalendarBtn.addEventListener('click', async () => {
         const isVisible = calendarPanel.classList.contains('visible');
         if (!isVisible) {
-            // Mostrar calendario y cargar eventos
             calendarPanel.classList.add('visible');
             toggleCalendarBtn.textContent = '🗓️ Ocultar calendario';
             await cargarEventosCalendario();
@@ -341,7 +334,6 @@
         }
     });
 
-    // --- Eventos UI ---
     sendBtn.addEventListener('click', () => sendMessage());
     userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
     document.querySelectorAll('.quick-btn').forEach(btn => {
@@ -353,7 +345,6 @@
         }
     });
 
-    // Mensaje de bienvenida
     addMessage("👋 ¡Hola! Prueba: 'Agenda firma el viernes a las 3pm', '¿Qué tengo hoy?' o '¿Qué tengo esta semana?'", 'bot');
 </script>
 </body>
