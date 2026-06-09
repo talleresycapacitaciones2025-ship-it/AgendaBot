@@ -216,7 +216,6 @@
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${type}`;
         if (type === 'bot') {
-            // Formatear: convertir **texto** a <strong>
             let formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             formatted = formatted.replace(/^[•\-]\s+/gm, '🔹 ');
             formatted = formatted.replace(/•/g, '🔹');
@@ -268,21 +267,34 @@
         }
     }
 
-    // --- Calendario con creación de fechas en hora local (sin conversión UTC) ---
+    // --- Función para formatear hora HH:MM siempre con dos dígitos en minutos ---
+    function formatearHoraCompleta(hora) {
+        // hora viene como "HH:MM"
+        if (!hora) return "";
+        const partes = hora.split(':');
+        if (partes.length !== 2) return hora;
+        const h = partes[0];
+        let m = partes[1];
+        if (m.length === 1) m = '0' + m;
+        return `${h}:${m}`;
+    }
+
+    // --- Calendario con hora formateada correctamente ---
     async function cargarEventosCalendario() {
         try {
             const resp = await fetch(EVENTOS_URL);
             const eventos = await resp.json();
-            // Construir eventos usando partes de fecha y hora, sin interpretación UTC
             const eventosFormateados = eventos.map(ev => {
                 const [year, month, day] = ev.fecha.split('-').map(Number);
-                const [hour, minute] = ev.hora.split(':').map(Number);
-                // Crear fecha en hora local (el navegador la tratará como local)
+                let [hour, minute] = ev.hora.split(':').map(Number);
+                if (isNaN(minute)) minute = 0;
                 const fechaLocal = new Date(year, month-1, day, hour, minute);
-                // Si la fecha es inválida, omitir
                 if (isNaN(fechaLocal.getTime())) return null;
+                // Forzar el título a mostrar la hora completa (ej. "Webinar 11:00")
+                const horaCompleta = formatearHoraCompleta(ev.hora);
+                const tituloConHora = `${ev.titulo} ${horaCompleta}`;
                 return {
-                    title: ev.titulo,
+                    title: tituloConHora,
                     start: fechaLocal,
                     extendedProps: { id: ev.id, horaOriginal: ev.hora }
                 };
@@ -305,12 +317,14 @@
                     events: eventosFormateados,
                     eventClick: function(info) {
                         const titulo = info.event.title;
+                        // Extraer el título sin la hora añadida
+                        const tituloLimpio = titulo.replace(/\s\d{1,2}:\d{2}$/, '');
                         const start = info.event.start;
                         if (!start) return;
-                        const fechaStr = start.toISOString().slice(0,10);
+                        const fechaStr = `${start.getFullYear()}-${(start.getMonth()+1).toString().padStart(2,'0')}-${start.getDate().toString().padStart(2,'0')}`;
                         const horaStr = `${start.getHours().toString().padStart(2,'0')}:${start.getMinutes().toString().padStart(2,'0')}`;
-                        if (confirm(`¿Cancelar evento "${titulo}" del ${fechaStr} a las ${horaStr}?`)) {
-                            sendMessage(`Cancela ${titulo} del ${fechaStr}`);
+                        if (confirm(`¿Cancelar evento "${tituloLimpio}" del ${fechaStr} a las ${horaStr}?`)) {
+                            sendMessage(`Cancela ${tituloLimpio} del ${fechaStr}`);
                         }
                     }
                 });
