@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 AgendaBot · Asistente Personal</title>
+    <style>
+        * { box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+        body { margin: 0; background: #f2f4f7; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem; }
+        .chat-container { max-width: 800px; width: 100%; background: white; border-radius: 32px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; height: 85vh; }
+        .chat-header { background: #d32f2f; color: white; padding: 1rem 1.5rem; }
+        .chat-header h1 { margin: 0; font-size: 1.4rem; display: flex; align-items: center; gap: 0.5rem; }
+        .chat-header p { margin: 0.25rem 0 0; font-size: 0.8rem; opacity: 0.9; }
+        .messages { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; background: #f9fafb; }
+        .message { max-width: 80%; padding: 0.75rem 1rem; border-radius: 20px; line-height: 1.4; word-wrap: break-word; }
+        .user { background: #d32f2f; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .bot { background: #e5e7eb; color: #1f2937; align-self: flex-start; border-bottom-left-radius: 4px; }
+        .input-area { display: flex; padding: 1rem; background: white; border-top: 1px solid #e5e7eb; gap: 0.5rem; }
+        .input-area input { flex: 1; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 40px; font-size: 1rem; outline: none; }
+        .input-area input:focus { border-color: #d32f2f; }
+        .input-area button { background: #d32f2f; color: white; border: none; border-radius: 40px; padding: 0 1.25rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .input-area button:hover { background: #b71c1c; }
+        .footer { font-size: 0.7rem; text-align: center; padding: 0.75rem; color: #6b7280; background: white; border-top: 1px solid #f0f0f0; }
+        .typing { display: flex; gap: 4px; padding: 0.5rem 1rem; background: #e5e7eb; border-radius: 20px; width: fit-content; align-items: center; }
+        .dot { width: 6px; height: 6px; background: #6b7280; border-radius: 50%; animation: pulse 1.4s infinite; }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes pulse { 0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); } 30% { opacity: 1; transform: scale(1.2); } }
+    </style>
+</head>
+<body>
+<div class="chat-container">
+    <div class="chat-header">
+        <h1>📅 AgendaBot · Asistente Personal</h1>
+        <p>🗣️ Escríbeme en lenguaje natural: “agenda reunión con Ana mañana a las 11 am” o “qué tengo hoy”</p>
+    </div>
+    <div class="messages" id="messages"></div>
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="Escribe tu mensaje aquí..." autofocus>
+        <button id="sendBtn">➤ Enviar</button>
+    </div>
+    <div class="footer">⚡ Respuestas generadas por IA · Los eventos se guardan de forma segura en Cloudflare KV</div>
+</div>
+
+<script>
+    // --------------------------------------------------------------
+    // 🔁 REEMPLAZA ESTA URL CON LA DIRECCIÓN CORRECTA DE TU WORKER
+    // --------------------------------------------------------------
+    const WORKER_URL = "https://agenda-bot.dianaml76.workers.dev/chat";
+
+    const messagesDiv = document.getElementById('messages');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    // Añadir un mensaje al chat (tipo: 'user' o 'bot')
+    function addMessage(text, type) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${type === 'user' ? 'user' : 'bot'}`;
+        msgDiv.innerText = text;
+        messagesDiv.appendChild(msgDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    // Mostrar indicador de "escribiendo"
+    function showTyping() {
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'typing';
+        typingDiv.id = 'typingIndicator';
+        for (let i = 0; i < 3; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            typingDiv.appendChild(dot);
+        }
+        messagesDiv.appendChild(typingDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function hideTyping() {
+        const indicator = document.getElementById('typingIndicator');
+        if (indicator) indicator.remove();
+    }
+
+    // Enviar mensaje al Worker
+    async function sendMessage() {
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        // Mostrar mensaje del usuario
+        addMessage(text, 'user');
+        userInput.value = '';
+        userInput.focus();
+
+        // Indicador de escritura
+        showTyping();
+
+        try {
+            const response = await fetch(WORKER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text })
+            });
+
+            hideTyping();
+
+            if (!response.ok) {
+                addMessage(`❌ Error del servidor (${response.status}). Verifica que tu Worker esté activo.`, 'bot');
+                return;
+            }
+
+            const data = await response.json();
+            const botReply = data.respuesta_texto || "No entendí, ¿puedes repetirlo?";
+            addMessage(botReply, 'bot');
+
+        } catch (error) {
+            hideTyping();
+            console.error(error);
+            addMessage("❌ No se pudo conectar con el asistente. Revisa tu conexión o que el Worker esté desplegado.", 'bot');
+        }
+    }
+
+    // Eventos
+    sendBtn.addEventListener('click', sendMessage);
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+
+    // Mensaje de bienvenida
+    addMessage("👋 ¡Hola! Soy tu asistente de agenda. Puedes pedirme cosas como:\n\n• Agenda reunión con Juan el viernes a las 3 pm\n• ¿Qué tengo mañana?\n• Cancela mi cita con Ana", 'bot');
+</script>
+</body>
+</html>
