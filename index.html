@@ -296,6 +296,21 @@
             color: #fff !important;
             font-weight: 600 !important;
         }
+        /* Texto del evento centrado en la casilla del día */
+        .fc-daygrid-event .fc-event-main,
+        .fc-daygrid-event .fc-event-main-frame {
+            text-align: center;
+            justify-content: center;
+            width: 100%;
+        }
+        .fc-daygrid-event .fc-event-title-container {
+            width: 100%;
+        }
+        .fc-daygrid-event .fc-event-title {
+            display: block;
+            text-align: center;
+            white-space: normal;
+        }
         .fc-day-today { background-color: var(--bg-accent-2) !important; }
         .fc .fc-list-empty { background: transparent; color: var(--text-soft); }
 
@@ -335,7 +350,7 @@
         </div>
         <div class="messages" id="messages" aria-live="polite"></div>
         <div class="input-area">
-            <input type="text" id="userInput" placeholder="Ej: Agenda firma el viernes a las 3pm" autofocus>
+            <input type="text" id="userInput" placeholder="Ej: Agendar, Firma de contrato, viernes, 3pm" autofocus>
             <button class="send" id="sendBtn">Enviar</button>
         </div>
     </div>
@@ -419,11 +434,34 @@
         if (!estado) userInput.focus();
     }
 
+    /* Convierte "Agendar, [evento], [día], [hora]" al lenguaje del Worker */
+    function interpretarFormatoAgendar(message) {
+        const match = message.match(/^agendar\s*,/i);
+        if (!match) return { ok: true, texto: message };
+        const partes = message.split(',').map(p => p.trim()).filter(p => p.length > 0);
+        if (partes.length !== 4) {
+            return {
+                ok: false,
+                error: "⚠️ Formato incorrecto. Usa:\n**Agendar, [evento], [día], [hora]**\n\nEjemplo: *Agendar, Firma de contrato, viernes, 3pm*"
+            };
+        }
+        const [, evento, dia, hora] = partes;
+        return { ok: true, texto: `Agenda ${evento} el ${dia} a las ${hora}` };
+    }
+
     async function sendMessage(text = null) {
-        const message = text || userInput.value.trim();
-        if (!message) return;
+        const escritoPorUsuario = text || userInput.value.trim();
+        if (!escritoPorUsuario) return;
+        const interpretado = interpretarFormatoAgendar(escritoPorUsuario);
+        if (!interpretado.ok) {
+            if (!text) userInput.value = '';
+            addMessage(escritoPorUsuario, 'user');
+            addMessage(interpretado.error, 'bot');
+            return;
+        }
+        const message = interpretado.texto;
         if (!text) userInput.value = '';
-        addMessage(message, 'user');
+        addMessage(escritoPorUsuario, 'user');
         showTyping();
         setSending(true);
         try {
@@ -525,7 +563,7 @@
         }
     });
 
-    addMessage("👋 ¡Hola! Prueba: 'Agenda firma el viernes a las 3pm', '¿Qué tengo hoy?' o '¿Qué tengo esta semana?'", 'bot');
+    addMessage("👋 ¡Hola! Para agendar usa el formato:\n**Agendar, [evento], [día], [hora]**\n\nEjemplo: *Agendar, Firma de contrato, viernes, 3pm*\n\nTambién puedes preguntar: '¿Qué tengo hoy?' o '¿Qué tengo esta semana?'", 'bot');
 </script>
 </body>
 </html>
