@@ -34,6 +34,8 @@
             --shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
             --grad: linear-gradient(135deg, #1e3a8a, #6d28d9);
             --grad-btn: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            --ok: #16a34a;
+            --err: #dc2626;
         }
         body.dark {
             --bg: #0b1120;
@@ -129,8 +131,10 @@
             color: transparent;
         }
 
-        /* Interruptor modo oscuro */
-        .theme-toggle {
+        .header-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+        /* Botones redondos del encabezado */
+        .round-btn {
             border: 1px solid var(--border);
             background: var(--input-bg);
             color: var(--text);
@@ -141,8 +145,21 @@
             font-size: 1.05rem;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             padding: 0;
+            position: relative;
         }
+        .round-btn:hover { transform: scale(1.08); }
         .theme-toggle:hover { transform: rotate(15deg) scale(1.06); }
+
+        /* Indicador de key configurada */
+        .key-dot {
+            position: absolute;
+            bottom: 1px; right: 1px;
+            width: 11px; height: 11px;
+            border-radius: 50%;
+            border: 2px solid var(--card-solid);
+            background: var(--err);
+        }
+        .key-dot.ok { background: var(--ok); }
 
         /* ===== Botones rápidos ===== */
         .quick-buttons {
@@ -296,16 +313,13 @@
             color: #fff !important;
             font-weight: 600 !important;
         }
-        /* Texto del evento centrado en la casilla del día */
         .fc-daygrid-event .fc-event-main,
         .fc-daygrid-event .fc-event-main-frame {
             text-align: center;
             justify-content: center;
             width: 100%;
         }
-        .fc-daygrid-event .fc-event-title-container {
-            width: 100%;
-        }
+        .fc-daygrid-event .fc-event-title-container { width: 100%; }
         .fc-daygrid-event .fc-event-title {
             display: block;
             text-align: center;
@@ -321,6 +335,110 @@
             color: var(--text-soft);
         }
 
+        /* ===== Modal de configuración ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 16px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: var(--card-solid);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 460px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 1.4rem 1.4rem 1.2rem;
+            animation: pop 0.25s ease;
+        }
+        .modal h3 {
+            margin: 0 0 0.35rem;
+            font-size: 1.15rem;
+            background: var(--grad);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .modal p.hint {
+            margin: 0 0 1rem;
+            font-size: 0.8rem;
+            color: var(--text-soft);
+            line-height: 1.45;
+        }
+        .field { margin-bottom: 0.9rem; }
+        .field label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 700;
+            margin-bottom: 0.35rem;
+            color: var(--text);
+        }
+        .field input {
+            width: 100%;
+            padding: 0.7rem 0.95rem;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: var(--input-bg);
+            color: var(--text);
+            font-size: 0.88rem;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .field input:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15);
+        }
+        .key-wrap { position: relative; }
+        .key-wrap input { padding-right: 2.8rem; }
+        .eye-btn {
+            position: absolute;
+            right: 6px; top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0.3rem;
+            color: var(--text-soft);
+        }
+        .modal-status {
+            font-size: 0.78rem;
+            margin: 0.4rem 0 0.9rem;
+            min-height: 1.1rem;
+        }
+        .modal-status.ok { color: var(--ok); }
+        .modal-status.err { color: var(--err); }
+        .modal-actions {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+        .modal-actions button {
+            flex: 1;
+            min-width: 110px;
+            border: none;
+            border-radius: 14px;
+            padding: 0.7rem 0.9rem;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: opacity 0.2s ease, transform 0.15s ease;
+        }
+        .modal-actions button:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.92; }
+        .modal-actions button:disabled { opacity: 0.55; cursor: not-allowed; }
+        .btn-primary { background: var(--grad-btn); color: #fff; }
+        .btn-secondary { background: var(--input-bg); color: var(--text); border: 1px solid var(--border) !important; }
+        .btn-danger { background: #fee2e2; color: #b91c1c; }
+
         /* ===== Responsive ===== */
         @media (max-width: 900px) {
             .container.calendar-open { grid-template-columns: 1fr; }
@@ -333,15 +451,20 @@
             .quick-btn { font-size: 0.72rem; padding: 0.4rem 0.85rem; }
             button.send { padding: 0 1.1rem; }
             .brand { font-size: 1.15rem; }
+            .modal { padding: 1.1rem; }
         }
     </style>
+<base target="_blank">
 </head>
 <body>
 <div class="container" id="mainContainer">
     <div class="card chat-panel">
         <div class="card-header">
             <h2 class="brand"><span class="logo">🤖</span> AgendaBot</h2>
-            <button class="theme-toggle" id="themeToggle" title="Cambiar tema" aria-label="Cambiar tema">🌙</button>
+            <div class="header-actions">
+                <button class="round-btn" id="configBtn" title="Configurar API Key" aria-label="Configurar API Key">🔑<span class="key-dot" id="keyDot"></span></button>
+                <button class="round-btn theme-toggle" id="themeToggle" title="Cambiar tema" aria-label="Cambiar tema">🌙</button>
+            </div>
         </div>
         <div class="quick-buttons">
             <div class="quick-btn" data-msg="¿Qué tengo hoy?">📌 Hoy</div>
@@ -363,10 +486,93 @@
 </div>
 <footer>⚡ Los eventos se guardan en la nube. Pregunta: "¿Qué tengo hoy?", "¿Qué tengo esta semana?"</footer>
 
-<script>
-    const WORKER_URL = "https://agenda-bot.dianaml76.workers.dev/chat";
-    const EVENTOS_URL = "https://agenda-bot.dianaml76.workers.dev/eventos";
+<!-- ===== Modal de configuración ===== -->
+<div class="modal-overlay" id="configModal" role="dialog" aria-modal="true" aria-labelledby="configTitle">
+    <div class="modal">
+        <h3 id="configTitle">🔑 Configuración de conexión</h3>
+        <p class="hint">Ingresa tu API key y las URLs del Worker. Se guardan solo en <strong>tu navegador</strong> (localStorage), no en el código. Cuando la key venza, solo la cambias aquí.</p>
+        <div class="field">
+            <label for="cfgKey">API Key</label>
+            <div class="key-wrap">
+                <input type="password" id="cfgKey" placeholder="Pega tu API key aquí" autocomplete="off">
+                <button class="eye-btn" id="toggleKeyVisibility" title="Mostrar/ocultar">👁️</button>
+            </div>
+        </div>
+        <div class="field">
+            <label for="cfgWorker">URL del Worker (chat)</label>
+            <input type="text" id="cfgWorker" placeholder="https://agenda-bot...workers.dev/chat">
+        </div>
+        <div class="field">
+            <label for="cfgEventos">URL de eventos</label>
+            <input type="text" id="cfgEventos" placeholder="https://agenda-bot...workers.dev/eventos">
+        </div>
+        <div class="modal-status" id="modalStatus"></div>
+        <div class="modal-actions">
+            <button class="btn-primary" id="saveConfigBtn">💾 Guardar</button>
+            <button class="btn-secondary" id="testConfigBtn">🧪 Probar</button>
+            <button class="btn-danger" id="clearConfigBtn">🗑️ Borrar</button>
+            <button class="btn-secondary" id="closeConfigBtn">Cerrar</button>
+        </div>
+    </div>
+</div>
 
+<script>
+    /* =========================================================
+       CONFIGURACIÓN — ya NO va hardcodeada en el código.
+       Se guarda en localStorage y se edita desde el botón 🔑.
+       ========================================================= */
+    const CONFIG_KEY = 'agendabot-config';
+
+    const DEFAULTS = {
+        apiKey: '',
+        workerUrl: 'https://agenda-bot.dianaml76.workers.dev/chat',
+        eventosUrl: 'https://agenda-bot.dianaml76.workers.dev/eventos'
+    };
+
+    let config = { ...DEFAULTS };
+
+    function cargarConfig() {
+        try {
+            const guardado = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
+            config = { ...DEFAULTS, ...guardado };
+        } catch {
+            config = { ...DEFAULTS };
+        }
+        actualizarIndicadorKey();
+    }
+
+    function guardarConfig() {
+        localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+        actualizarIndicadorKey();
+    }
+
+    function borrarConfig() {
+        localStorage.removeItem(CONFIG_KEY);
+        config = { ...DEFAULTS };
+        actualizarIndicadorKey();
+    }
+
+    function actualizarIndicadorKey() {
+        const dot = document.getElementById('keyDot');
+        const tieneKey = !!(config.apiKey && config.apiKey.trim());
+        dot.classList.toggle('ok', tieneKey);
+        dot.title = tieneKey ? 'API key configurada' : 'Falta configurar la API key';
+    }
+
+    function getWorkerUrl() { return (config.workerUrl || '').replace(/\/$/, ''); }
+    function getEventosUrl() { return (config.eventosUrl || '').replace(/\/$/, ''); }
+
+    /* Headers con la API key (si existe) */
+    function buildHeaders(extra = {}) {
+        const headers = { ...extra };
+        if (config.apiKey && config.apiKey.trim()) {
+            headers['x-api-key'] = config.apiKey.trim();
+            headers['Authorization'] = 'Bearer ' + config.apiKey.trim();
+        }
+        return headers;
+    }
+
+    /* ===== Referencias DOM ===== */
     const messagesDiv = document.getElementById('messages');
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
@@ -374,7 +580,91 @@
     const calendarPanel = document.getElementById('calendarPanel');
     const mainContainer = document.getElementById('mainContainer');
     const themeToggle = document.getElementById('themeToggle');
+    const configBtn = document.getElementById('configBtn');
+    const configModal = document.getElementById('configModal');
+    const cfgKey = document.getElementById('cfgKey');
+    const cfgWorker = document.getElementById('cfgWorker');
+    const cfgEventos = document.getElementById('cfgEventos');
+    const modalStatus = document.getElementById('modalStatus');
     let calendar = null;
+
+    /* ===== Modal de configuración ===== */
+    function abrirConfig(mensaje = '') {
+        cfgKey.value = config.apiKey || '';
+        cfgWorker.value = config.workerUrl || '';
+        cfgEventos.value = config.eventosUrl || '';
+        setModalStatus(mensaje, mensaje ? 'err' : '');
+        configModal.classList.add('open');
+        setTimeout(() => cfgKey.focus(), 80);
+    }
+    function cerrarConfig() { configModal.classList.remove('open'); }
+
+    function setModalStatus(texto, tipo = '') {
+        modalStatus.textContent = texto;
+        modalStatus.className = 'modal-status ' + tipo;
+    }
+
+    function leerCamposConfig() {
+        config.apiKey = cfgKey.value.trim();
+        config.workerUrl = cfgWorker.value.trim();
+        config.eventosUrl = cfgEventos.value.trim();
+    }
+
+    configBtn.addEventListener('click', () => abrirConfig());
+    document.getElementById('closeConfigBtn').addEventListener('click', cerrarConfig);
+    configModal.addEventListener('click', (e) => { if (e.target === configModal) cerrarConfig(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarConfig(); });
+
+    document.getElementById('toggleKeyVisibility').addEventListener('click', () => {
+        cfgKey.type = cfgKey.type === 'password' ? 'text' : 'password';
+    });
+
+    document.getElementById('saveConfigBtn').addEventListener('click', () => {
+        leerCamposConfig();
+        if (!config.apiKey) {
+            setModalStatus('⚠️ Ingresa la API key. Sin ella el Worker rechazará las peticiones.', 'err');
+            return;
+        }
+        if (!config.workerUrl || !config.eventosUrl) {
+            setModalStatus('⚠️ Ingresa ambas URLs del Worker.', 'err');
+            return;
+        }
+        guardarConfig();
+        setModalStatus('✅ Guardado. La conexión usará estos datos.', 'ok');
+        setTimeout(cerrarConfig, 900);
+        addMessage('🔑 Configuración guardada. Ya puedes usar el chat.', 'bot');
+    });
+
+    document.getElementById('clearConfigBtn').addEventListener('click', () => {
+        if (!confirm('¿Borrar la API key y URLs guardadas en este navegador?')) return;
+        borrarConfig();
+        cfgKey.value = ''; cfgWorker.value = DEFAULTS.workerUrl; cfgEventos.value = DEFAULTS.eventosUrl;
+        setModalStatus('🗑️ Configuración borrada de este navegador.', 'ok');
+    });
+
+    /* Prueba de conexión: hace ping al endpoint de eventos */
+    document.getElementById('testConfigBtn').addEventListener('click', async () => {
+        leerCamposConfig();
+        const btn = document.getElementById('testConfigBtn');
+        btn.disabled = true;
+        setModalStatus('🧪 Probando conexión…', '');
+        try {
+            // Prueba contra /ping: valida conexión Y API key a la vez
+            const pingUrl = getWorkerUrl().replace(/\/chat$/, '/ping');
+            const resp = await fetch(pingUrl, { headers: buildHeaders() });
+            if (resp.ok) {
+                setModalStatus('✅ Conexión exitosa. El Worker respondió correctamente.', 'ok');
+            } else if (resp.status === 401 || resp.status === 403) {
+                setModalStatus('🔒 El Worker respondió 401/403: la API key es incorrecta o venció.', 'err');
+            } else {
+                setModalStatus(`⚠️ El Worker respondió con estado ${resp.status}.`, 'err');
+            }
+        } catch (err) {
+            setModalStatus('❌ No se pudo conectar. Revisa la URL y tu conexión.', 'err');
+        } finally {
+            btn.disabled = false;
+        }
+    });
 
     /* ===== Tema claro / oscuro (persistente) ===== */
     function aplicarTema(tema) {
@@ -449,9 +739,21 @@
         return { ok: true, texto: `Agenda ${evento} el ${dia} a las ${hora}` };
     }
 
+    function avisoSiFaltaKey() {
+        if (config.apiKey && config.apiKey.trim()) return false;
+        addMessage('🔑 **Falta configurar tu API key.** Toca el botón 🔑 arriba a la derecha, pégala y guarda. Solo lo harás una vez por navegador.', 'bot');
+        abrirConfig();
+        return true;
+    }
+
     async function sendMessage(text = null) {
         const escritoPorUsuario = text || userInput.value.trim();
         if (!escritoPorUsuario) return;
+        if (avisoSiFaltaKey()) {
+            if (!text) userInput.value = '';
+            addMessage(escritoPorUsuario, 'user');
+            return;
+        }
         const interpretado = interpretarFormatoAgendar(escritoPorUsuario);
         if (!interpretado.ok) {
             if (!text) userInput.value = '';
@@ -465,11 +767,17 @@
         showTyping();
         setSending(true);
         try {
-            const res = await fetch(WORKER_URL, {
+            const res = await fetch(getWorkerUrl(), {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: buildHeaders({ 'Content-Type': 'application/json' }),
                 body: JSON.stringify({ text: message })
             });
+            if (res.status === 401 || res.status === 403) {
+                hideTyping();
+                addMessage('🔒 **API key rechazada (401/403).** Parece que venció. Toca el botón 🔑 e ingresa una nueva.', 'bot');
+                abrirConfig();
+                return;
+            }
             const data = await res.json();
             hideTyping();
             addMessage(data.respuesta_texto || "❌ Respuesta vacía", 'bot');
@@ -495,7 +803,8 @@
 
     async function cargarEventosCalendario() {
         try {
-            const resp = await fetch(EVENTOS_URL);
+            const resp = await fetch(getEventosUrl(), { headers: buildHeaders() });
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
             const eventos = await resp.json();
             const eventosFormateados = eventos.map(ev => {
                 const [year, month, day] = ev.fecha.split('-').map(Number);
@@ -539,6 +848,7 @@
     toggleCalendarBtn.addEventListener('click', async () => {
         const isVisible = calendarPanel.classList.contains('visible');
         if (!isVisible) {
+            if (avisoSiFaltaKey()) return;
             calendarPanel.classList.add('visible');
             mainContainer.classList.add('calendar-open');
             toggleCalendarBtn.classList.add('active');
@@ -563,7 +873,16 @@
         }
     });
 
+    /* ===== Inicio ===== */
+    cargarConfig();
     addMessage("👋 ¡Hola! Para agendar usa el formato:\n**Agendar, [evento], [día], [hora]**\n\nEjemplo: *Agendar, Firma de contrato, viernes, 3pm*\n\nTambién puedes preguntar: '¿Qué tengo hoy?' o '¿Qué tengo esta semana?'", 'bot');
+
+    /* Si es la primera vez (sin key guardada), pedirla de entrada */
+    if (!(config.apiKey && config.apiKey.trim())) {
+        setTimeout(() => {
+            abrirConfig('🔒 Ingresa tu API key para empezar. La key anterior venció; pega aquí la nueva.');
+        }, 600);
+    }
 </script>
 </body>
 </html>
