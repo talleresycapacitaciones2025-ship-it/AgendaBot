@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>AgendaBot · Calendario Inteligente</title>
 
-    <!-- Iconos para navegador y pantalla de inicio (móvil) -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%236d28d9'/%3E%3Ctext x='50' y='68' font-size='50' text-anchor='middle' fill='white' font-family='Arial'%3E📅%3C/text%3E%3C/svg%3E">
     <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='30' fill='%236d28d9'/%3E%3Ctext x='90' y='115' font-size='90' text-anchor='middle' fill='white' font-family='Arial'%3E📅%3C/text%3E%3C/svg%3E">
     <meta name="theme-color" content="#6d28d9">
@@ -13,7 +12,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="AgendaBot">
 
-    <!-- FullCalendar CSS + JS + locale español -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/locales/es.global.min.js"></script>
@@ -93,7 +91,6 @@
             min-height: 0;
         }
 
-        /* ===== Encabezado ===== */
         .card-header {
             display: flex;
             align-items: center;
@@ -133,7 +130,6 @@
 
         .header-actions { display: flex; gap: 0.5rem; align-items: center; }
 
-        /* Botones redondos del encabezado */
         .round-btn {
             border: 1px solid var(--border);
             background: var(--input-bg);
@@ -150,7 +146,6 @@
         .round-btn:hover { transform: scale(1.08); }
         .theme-toggle:hover { transform: rotate(15deg) scale(1.06); }
 
-        /* Indicador de key configurada */
         .key-dot {
             position: absolute;
             bottom: 1px; right: 1px;
@@ -161,7 +156,6 @@
         }
         .key-dot.ok { background: var(--ok); }
 
-        /* ===== Botones rápidos ===== */
         .quick-buttons {
             display: flex;
             flex-wrap: wrap;
@@ -190,7 +184,6 @@
             border-color: transparent;
         }
 
-        /* ===== Chat ===== */
         .messages {
             flex: 1;
             overflow-y: auto;
@@ -238,7 +231,6 @@
             border-bottom-left-radius: 6px;
         }
 
-        /* Indicador escribiendo */
         .typing { display: inline-flex; gap: 5px; align-items: center; padding: 0.8rem 1.1rem; }
         .typing span {
             width: 7px; height: 7px; border-radius: 50%;
@@ -252,7 +244,6 @@
             40% { opacity: 1; transform: translateY(-4px); }
         }
 
-        /* ===== Entrada ===== */
         .input-area { display: flex; gap: 0.65rem; }
         input[type="text"] {
             flex: 1;
@@ -283,7 +274,6 @@
         button.send:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.95; }
         button.send:disabled { opacity: 0.55; cursor: not-allowed; }
 
-        /* ===== Calendario ===== */
         .calendar-panel { display: none; }
         .calendar-panel.visible { display: flex; }
         .calendar-hint {
@@ -335,7 +325,6 @@
             color: var(--text-soft);
         }
 
-        /* ===== Modal de configuración ===== */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -414,6 +403,8 @@
             font-size: 0.78rem;
             margin: 0.4rem 0 0.9rem;
             min-height: 1.1rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
         }
         .modal-status.ok { color: var(--ok); }
         .modal-status.err { color: var(--err); }
@@ -439,7 +430,6 @@
         .btn-secondary { background: var(--input-bg); color: var(--text); border: 1px solid var(--border) !important; }
         .btn-danger { background: #fee2e2; color: #b91c1c; }
 
-        /* ===== Responsive ===== */
         @media (max-width: 900px) {
             .container.calendar-open { grid-template-columns: 1fr; }
             .messages { max-height: 50vh; }
@@ -454,7 +444,6 @@
             .modal { padding: 1.1rem; }
         }
     </style>
-<base target="_blank">
 </head>
 <body>
 <div class="container" id="mainContainer">
@@ -473,7 +462,7 @@
         </div>
         <div class="messages" id="messages" aria-live="polite"></div>
         <div class="input-area">
-            <input type="text" id="userInput" placeholder="Ej: Agendar, Firma de contrato, viernes, 3pm" autofocus>
+            <input type="text" id="userInput" placeholder="Ej: Agendar, Reunion Andrea Delgado en el CCIPD, viernes, 2 pm" autofocus>
             <button class="send" id="sendBtn">Enviar</button>
         </div>
     </div>
@@ -486,11 +475,10 @@
 </div>
 <footer>⚡ Los eventos se guardan en la nube. Pregunta: "¿Qué tengo hoy?", "¿Qué tengo esta semana?"</footer>
 
-<!-- ===== Modal de configuración ===== -->
 <div class="modal-overlay" id="configModal" role="dialog" aria-modal="true" aria-labelledby="configTitle">
     <div class="modal">
         <h3 id="configTitle">🔑 Configuración de conexión</h3>
-        <p class="hint">Ingresa tu API key y las URLs del Worker. Se guardan solo en <strong>tu navegador</strong> (localStorage), no en el código. Cuando la key venza, solo la cambias aquí.</p>
+        <p class="hint">Ingresa tu API key y las URLs del Worker. Se guardan solo en <strong>tu navegador</strong> (localStorage).</p>
         <div class="field">
             <label for="cfgKey">API Key</label>
             <div class="key-wrap">
@@ -518,8 +506,7 @@
 
 <script>
     /* =========================================================
-       CONFIGURACIÓN — ya NO va hardcodeada en el código.
-       Se guarda en localStorage y se edita desde el botón 🔑.
+       CONFIGURACIÓN — se guarda en localStorage y se edita con 🔑
        ========================================================= */
     const CONFIG_KEY = 'agendabot-config';
 
@@ -561,8 +548,10 @@
 
     function getWorkerUrl() { return (config.workerUrl || '').replace(/\/$/, ''); }
     function getEventosUrl() { return (config.eventosUrl || '').replace(/\/$/, ''); }
+    function getBaseUrl() {
+        return getWorkerUrl().replace(/\/(chat|eventos|ping|health)$/, '');
+    }
 
-    /* Headers con la API key (si existe) */
     function buildHeaders(extra = {}) {
         const headers = { ...extra };
         if (config.apiKey && config.apiKey.trim()) {
@@ -572,7 +561,16 @@
         return headers;
     }
 
-    /* ===== Referencias DOM ===== */
+    async function fetchConTimeout(url, opciones = {}, ms = 15000) {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), ms);
+        try {
+            return await fetch(url, { ...opciones, signal: ctrl.signal });
+        } finally {
+            clearTimeout(timer);
+        }
+    }
+
     const messagesDiv = document.getElementById('messages');
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
@@ -642,31 +640,57 @@
         setModalStatus('🗑️ Configuración borrada de este navegador.', 'ok');
     });
 
-    /* Prueba de conexión: hace ping al endpoint de eventos */
+    /* =========================================================
+       🧪 PROBAR CONEXIÓN — consulta /health y /ping
+       ========================================================= */
     document.getElementById('testConfigBtn').addEventListener('click', async () => {
         leerCamposConfig();
         const btn = document.getElementById('testConfigBtn');
         btn.disabled = true;
         setModalStatus('🧪 Probando conexión…', '');
+
+        const base = getBaseUrl();
+
         try {
-            // Prueba contra /ping: valida conexión Y API key a la vez
-            const pingUrl = getWorkerUrl().replace(/\/chat$/, '/ping');
-            const resp = await fetch(pingUrl, { headers: buildHeaders() });
-            if (resp.ok) {
-                setModalStatus('✅ Conexión exitosa. El Worker respondió correctamente.', 'ok');
-            } else if (resp.status === 401 || resp.status === 403) {
-                setModalStatus('🔒 El Worker respondió 401/403: la API key es incorrecta o venció.', 'err');
-            } else {
-                setModalStatus(`⚠️ El Worker respondió con estado ${resp.status}.`, 'err');
+            let healthTxt = '';
+            try {
+                const r = await fetchConTimeout(base + '/health', {}, 8000);
+                if (r.ok) {
+                    const h = await r.json();
+                    const okCount = [h.kv_configurado, h.groq_key_presente, h.app_key_presente].filter(Boolean).length;
+                    healthTxt = `Diagnóstico: ${okCount}/3 OK` +
+                        `\n  • KV: ${h.kv_configurado ? '✅' : '❌'}` +
+                        `\n  • Groq key: ${h.groq_key_presente ? '✅' : '❌'}` +
+                        `\n  • App key: ${h.app_key_presente ? '✅' : '❌'}` +
+                        `\n  • Modelo: ${h.groq_model || '(default)'}`;
+                } else {
+                    healthTxt = `No pude consultar /health (HTTP ${r.status}). Puede que el Worker no esté actualizado.`;
+                }
+            } catch (e) {
+                healthTxt = `No pude consultar /health (${e.message}).`;
             }
-        } catch (err) {
-            setModalStatus('❌ No se pudo conectar. Revisa la URL y tu conexión.', 'err');
+
+            try {
+                const r = await fetchConTimeout(base + '/ping', { headers: buildHeaders() }, 8000);
+                if (r.ok) {
+                    setModalStatus(`✅ Conexión exitosa. El Worker respondió correctamente.\n\n${healthTxt}`, 'ok');
+                } else if (r.status === 401 || r.status === 403) {
+                    setModalStatus(`🔒 El Worker respondió 401/403: la API key es incorrecta o venció.\n\n${healthTxt}`, 'err');
+                } else if (r.status === 404) {
+                    setModalStatus(`⚠️ El Worker respondió 404: la ruta /ping no existe. Revisa la URL y que el Worker esté actualizado.\n\n${healthTxt}`, 'err');
+                } else {
+                    const txt = await r.text().catch(() => '');
+                    setModalStatus(`⚠️ El Worker respondió con estado ${r.status}.\n${txt.slice(0, 200)}\n\n${healthTxt}`, 'err');
+                }
+            } catch (e) {
+                setModalStatus(`❌ No se pudo conectar al Worker (${e.message}). Revisa la URL y tu conexión.\n\n${healthTxt}`, 'err');
+            }
         } finally {
             btn.disabled = false;
         }
     });
 
-    /* ===== Tema claro / oscuro (persistente) ===== */
+    /* ===== Tema ===== */
     function aplicarTema(tema) {
         document.body.classList.toggle('dark', tema === 'dark');
         themeToggle.textContent = tema === 'dark' ? '☀️' : '🌙';
@@ -724,15 +748,18 @@
         if (!estado) userInput.focus();
     }
 
-    /* Convierte "Agendar, [evento], [día], [hora]" al lenguaje del Worker */
+    /* =========================================================
+       INTERPRETAR "Agendar, evento, día, hora" → lenguaje del Worker
+       Ahora acepta "Agenda," o "Agendar," (con coma).
+       ========================================================= */
     function interpretarFormatoAgendar(message) {
-        const match = message.match(/^agendar\s*,/i);
+        const match = message.match(/^agenda(r)?\s*,/i);
         if (!match) return { ok: true, texto: message };
         const partes = message.split(',').map(p => p.trim()).filter(p => p.length > 0);
         if (partes.length !== 4) {
             return {
                 ok: false,
-                error: "⚠️ Formato incorrecto. Usa:\n**Agendar, [evento], [día], [hora]**\n\nEjemplo: *Agendar, Firma de contrato, viernes, 3pm*"
+                error: "⚠️ Formato incorrecto. Usa:\n**Agendar, [evento], [día], [hora]**\n\nEjemplo: *Agendar, Reunion Andrea Delgado en el CCIPD, viernes, 2 pm*"
             };
         }
         const [, evento, dia, hora] = partes;
@@ -741,11 +768,14 @@
 
     function avisoSiFaltaKey() {
         if (config.apiKey && config.apiKey.trim()) return false;
-        addMessage('🔑 **Falta configurar tu API key.** Toca el botón 🔑 arriba a la derecha, pégala y guarda. Solo lo harás una vez por navegador.', 'bot');
+        addMessage('🔑 **Falta configurar tu API key.** Toca el botón 🔑 arriba a la derecha, pégala y guarda.', 'bot');
         abrirConfig();
         return true;
     }
 
+    /* =========================================================
+       💬 ENVIAR MENSAJE
+       ========================================================= */
     async function sendMessage(text = null) {
         const escritoPorUsuario = text || userInput.value.trim();
         if (!escritoPorUsuario) return;
@@ -767,25 +797,52 @@
         showTyping();
         setSending(true);
         try {
-            const res = await fetch(getWorkerUrl(), {
+            const res = await fetchConTimeout(getWorkerUrl(), {
                 method: 'POST',
                 headers: buildHeaders({ 'Content-Type': 'application/json' }),
                 body: JSON.stringify({ text: message })
-            });
+            }, 20000);
+
+            const raw = await res.text();
+            let data;
+            try {
+                data = JSON.parse(raw);
+            } catch {
+                hideTyping();
+                addMessage(`❌ El Worker respondió algo que no es JSON (HTTP ${res.status}).\n\nPrimeros caracteres:\n${raw.slice(0, 200)}`, 'bot');
+                return;
+            }
+
             if (res.status === 401 || res.status === 403) {
                 hideTyping();
-                addMessage('🔒 **API key rechazada (401/403).** Parece que venció. Toca el botón 🔑 e ingresa una nueva.', 'bot');
+                addMessage('🔒 **API key rechazada (401/403).** Parece que venció o es incorrecta. Toca el botón 🔑 e ingresa una nueva.', 'bot');
                 abrirConfig();
                 return;
             }
-            const data = await res.json();
+
             hideTyping();
-            addMessage(data.respuesta_texto || "❌ Respuesta vacía", 'bot');
+
+            if (data.respuesta_texto) {
+                addMessage(data.respuesta_texto, 'bot');
+            } else if (data.error) {
+                addMessage(`⚠️ El Worker devolvió un error: ${data.error}`, 'bot');
+            } else {
+                addMessage('❌ El Worker no devolvió respuesta_texto.', 'bot');
+            }
+
             if (calendarPanel.classList.contains('visible')) await cargarEventosCalendario();
+
         } catch (err) {
             hideTyping();
             console.error(err);
-            addMessage("❌ Error de conexión con el Worker", 'bot');
+            let msg = '❌ Error de conexión con el Worker.';
+            if (err.name === 'AbortError') {
+                msg = '❌ El Worker tardó más de 20 segundos en responder (timeout).';
+            } else if (err.message) {
+                msg += ` (${err.message})`;
+            }
+            msg += '\n\nVerifica con el botón 🔑 → 🧪 Probar.';
+            addMessage(msg, 'bot');
         } finally {
             setSending(false);
         }
@@ -803,8 +860,11 @@
 
     async function cargarEventosCalendario() {
         try {
-            const resp = await fetch(getEventosUrl(), { headers: buildHeaders() });
-            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const resp = await fetchConTimeout(getEventosUrl(), { headers: buildHeaders() }, 15000);
+            if (!resp.ok) {
+                console.warn('Error cargando eventos:', resp.status);
+                return;
+            }
             const eventos = await resp.json();
             const eventosFormateados = eventos.map(ev => {
                 const [year, month, day] = ev.fecha.split('-').map(Number);
@@ -875,12 +935,11 @@
 
     /* ===== Inicio ===== */
     cargarConfig();
-    addMessage("👋 ¡Hola! Para agendar usa el formato:\n**Agendar, [evento], [día], [hora]**\n\nEjemplo: *Agendar, Firma de contrato, viernes, 3pm*\n\nTambién puedes preguntar: '¿Qué tengo hoy?' o '¿Qué tengo esta semana?'", 'bot');
+    addMessage("👋 ¡Hola! Para agendar usa el formato:\n**Agendar, [evento], [día], [hora]**\n\nEjemplo: *Agendar, Reunion Andrea Delgado en el CCIPD, viernes, 2 pm*\n\nTambién puedes preguntar: '¿Qué tengo hoy?' o '¿Qué tengo esta semana?'", 'bot');
 
-    /* Si es la primera vez (sin key guardada), pedirla de entrada */
     if (!(config.apiKey && config.apiKey.trim())) {
         setTimeout(() => {
-            abrirConfig('🔒 Ingresa tu API key para empezar. La key anterior venció; pega aquí la nueva.');
+            abrirConfig('🔒 Ingresa tu API key para empezar.');
         }, 600);
     }
 </script>
