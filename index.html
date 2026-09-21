@@ -641,7 +641,7 @@
     });
 
     /* =========================================================
-       🧪 PROBAR CONEXIÓN — consulta /health y /ping
+       🧪 PROBAR CONEXIÓN
        ========================================================= */
     document.getElementById('testConfigBtn').addEventListener('click', async () => {
         leerCamposConfig();
@@ -748,10 +748,6 @@
         if (!estado) userInput.focus();
     }
 
-    /* =========================================================
-       INTERPRETAR "Agendar, evento, día, hora" → lenguaje del Worker
-       Ahora acepta "Agenda," o "Agendar," (con coma).
-       ========================================================= */
     function interpretarFormatoAgendar(message) {
         const match = message.match(/^agenda(r)?\s*,/i);
         if (!match) return { ok: true, texto: message };
@@ -773,9 +769,6 @@
         return true;
     }
 
-    /* =========================================================
-       💬 ENVIAR MENSAJE
-       ========================================================= */
     async function sendMessage(text = null) {
         const escritoPorUsuario = text || userInput.value.trim();
         if (!escritoPorUsuario) return;
@@ -858,6 +851,26 @@
         return `${h}:${m}`;
     }
 
+    /* Convierte "20:00" → "8 pm", "14:30" → "2:30 pm", "12:00" → "12 pm" */
+    function formatearHora12(hora) {
+        if (!hora) return "";
+        const [h, m] = hora.split(':');
+        let hh = parseInt(h, 10);
+        const ampm = hh >= 12 ? 'pm' : 'am';
+        hh = hh % 12;
+        if (hh === 0) hh = 12;
+        if (m === '00' || m === undefined) return `${hh} ${ampm}`;
+        return `${hh}:${m} ${ampm}`;
+    }
+
+    /* Convierte "2026-09-22" → "lunes" */
+    function obtenerDiaSemana(fechaStr) {
+        const [y, m, d] = fechaStr.split('-').map(Number);
+        const fecha = new Date(Date.UTC(y, m - 1, d));
+        const dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+        return dias[fecha.getUTCDay()];
+    }
+
     async function cargarEventosCalendario() {
         try {
             const resp = await fetchConTimeout(getEventosUrl(), { headers: buildHeaders() }, 15000);
@@ -874,7 +887,17 @@
                 if (isNaN(fechaLocal.getTime())) return null;
                 const horaCompleta = formatearHoraCompleta(ev.hora);
                 const tituloConHora = `${ev.titulo} ${horaCompleta}`;
-                return { id: ev.id, title: tituloConHora, start: fechaLocal, extendedProps: { id: ev.id } };
+                return {
+                    id: ev.id,
+                    title: tituloConHora,
+                    start: fechaLocal,
+                    extendedProps: {
+                        id: ev.id,
+                        tituloOriginal: ev.titulo,
+                        horaOriginal: ev.hora,
+                        fechaOriginal: ev.fecha
+                    }
+                };
             }).filter(ev => ev !== null);
 
             if (calendar) {
@@ -891,9 +914,16 @@
                     events: eventosFormateados,
                     eventClick: function (info) {
                         const idEvento = info.event.id;
-                        const titulo = info.event.title;
-                        const fechaStr = info.event.start.toISOString().slice(0, 10);
-                        if (confirm(`¿Cancelar evento "${titulo}" del ${fechaStr}?`)) {
+                        const props = info.event.extendedProps;
+
+                        // Usar datos originales (título limpio sin hora pegada)
+                        const titulo = props.tituloOriginal || info.event.title;
+                        const hora12 = formatearHora12(props.horaOriginal || '');
+                        const diaSemana = obtenerDiaSemana(props.fechaOriginal || '');
+                        const dia = props.fechaOriginal ? parseInt(props.fechaOriginal.split('-')[2], 10) : '';
+
+                        const mensaje = `¿Cancelar "${titulo}" a las ${hora12}, ${diaSemana} ${dia}?`;
+                        if (confirm(mensaje)) {
                             sendMessage(`Cancela id:${idEvento}`);
                         }
                     }
@@ -935,7 +965,7 @@
 
     /* ===== Inicio ===== */
     cargarConfig();
-    addMessage("👋 ¡Hola! Para agendar usa el formato:\n**Agendar, [evento], [día], [hora]**\n\nEjemplo: *Agendar, Reunion Andrea Delgado en el CCIPD, viernes, 2 pm*\n\nTambién puedes preguntar: '¿Qué tengo hoy?' o '¿Qué tengo esta semana?'", 'bot');
+    addMessage("👋 ¡Hola! Para agendar usa el formato:\n**Agendar, [evento], [día], [hora]**\n\nEjemplo: *Agendar, Reunion Petita Pacheco, viernes, 2 pm*\n\nTambién puedes preguntar: '¿Qué tengo hoy?' o '¿Qué tengo esta semana?'", 'bot');
 
     if (!(config.apiKey && config.apiKey.trim())) {
         setTimeout(() => {
